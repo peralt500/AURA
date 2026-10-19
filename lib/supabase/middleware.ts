@@ -41,10 +41,10 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // Redirigir si ya tiene sesión activa y accede al login
-  if (request.nextUrl.pathname.startsWith('/login') && user) {
+  // Redirigir si ya tiene sesión activa y accede a la portada (/) o al login (/login)
+  if (user && (request.nextUrl.pathname === '/' || request.nextUrl.pathname.startsWith('/login'))) {
     const url = request.nextUrl.clone()
-    url.pathname = '/dashboard'
+    url.pathname = '/explore'
     return NextResponse.redirect(url)
   }
 

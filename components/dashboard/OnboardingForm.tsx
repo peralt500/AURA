@@ -1,10 +1,12 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { createCreatorProfile } from '@/lib/actions/dashboard'
 import { Sparkles, Loader2, AlertCircle, ArrowRight, User, AtSign, AlignLeft } from 'lucide-react'
 
 export function OnboardingForm({ userEmail }: { userEmail?: string }) {
+  const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -22,6 +24,9 @@ export function OnboardingForm({ userEmail }: { userEmail?: string }) {
     if (result?.error) {
       setError(result.error)
       setLoading(false)
+    } else {
+      router.push('/explore')
+      router.refresh()
     }
   }
 
@@ -35,9 +40,9 @@ export function OnboardingForm({ userEmail }: { userEmail?: string }) {
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-purple-600/20 border border-purple-500/30 mb-4">
             <Sparkles className="w-7 h-7 text-purple-400" />
           </div>
-          <h2 className="text-2xl font-bold">¡Bienvenido a Agenda Creadores!</h2>
+          <h2 className="text-2xl font-bold">¡Bienvenido a AURA!</h2>
           <p className="text-muted-foreground text-sm mt-2">
-            Crea tu perfil de artista para habilitar tu página pública y empezar a registrar fans.
+            Crea tu perfil oficial de artista para habilitar tu página pública y empezar a interactuar con tu comunidad.
           </p>
         </div>
 

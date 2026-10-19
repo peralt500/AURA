@@ -1,17 +1,22 @@
 'use client'
 
 import { Fan } from '@/types/database'
-import { useState } from 'react'
-import { Download, Search, Users, CheckCircle, Clock, XCircle } from 'lucide-react'
+import { useState, useTransition } from 'react'
+import { Download, Search, Users, CheckCircle, Clock, XCircle, UserCheck, Loader2, Info } from 'lucide-react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { confirmFanManually, confirmAllPendingFans } from '@/lib/actions/fans'
+import { useRouter } from 'next/navigation'
 
 interface FansListTableProps {
   fans: Fan[]
 }
 
 export function FansListTable({ fans }: FansListTableProps) {
+  const router = useRouter()
   const [search, setSearch] = useState('')
+  const [isPending, startTransition] = useTransition()
+  const [actionMessage, setActionMessage] = useState<string | null>(null)
 
   const filtered = fans.filter(f =>
     f.email.toLowerCase().includes(search.toLowerCase())
@@ -46,8 +51,62 @@ export function FansListTable({ fans }: FansListTableProps) {
   const pendingCount = fans.filter(f => !f.confirmed_at && !f.unsubscribed_at).length
   const unsubCount = fans.filter(f => f.unsubscribed_at).length
 
+  const handleConfirmSingle = async (fanId: string) => {
+    startTransition(async () => {
+      const res = await confirmFanManually(fanId)
+      if (res?.success) {
+        setActionMessage('Fan confirmado exitosamente.')
+        router.refresh()
+      } else {
+        setActionMessage(res?.error || 'Error al confirmar fan.')
+      }
+      setTimeout(() => setActionMessage(null), 3500)
+    })
+  }
+
+  const handleConfirmAll = async () => {
+    if (!confirm('¿Deseas confirmar a todos los fans pendientes ahora mismo?')) return
+    startTransition(async () => {
+      const res = await confirmAllPendingFans()
+      if (res?.success) {
+        setActionMessage(`¡Se han confirmado ${res.count} fans con éxito!`)
+        router.refresh()
+      } else {
+        setActionMessage(res?.error || 'Error al confirmar fans.')
+      }
+      setTimeout(() => setActionMessage(null), 4000)
+    })
+  }
+
   return (
     <div className="space-y-4">
+      {/* Banner informativo de modelo unificado y sin esperas */}
+      <div className="p-3.5 rounded-xl bg-purple-500/10 border border-purple-500/20 text-xs text-purple-200 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <Info className="w-4 h-4 text-purple-400 shrink-0" />
+          <span>
+            <strong>Registro inmediato activado:</strong> Los nuevos fans quedan confirmados al instante sin esperas de correo.
+          </span>
+        </div>
+        {pendingCount > 0 && (
+          <button
+            onClick={handleConfirmAll}
+            disabled={isPending}
+            className="px-3 py-1 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-medium transition-colors shrink-0 flex items-center gap-1.5 shadow-sm"
+          >
+            {isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <UserCheck className="w-3.5 h-3.5" />}
+            Confirmar pendientes ({pendingCount})
+          </button>
+        )}
+      </div>
+
+      {actionMessage && (
+        <div className="p-3 bg-green-500/10 border border-green-500/20 text-green-400 text-xs rounded-xl flex items-center gap-2 animate-in fade-in">
+          <CheckCircle className="w-4 h-4" />
+          <span>{actionMessage}</span>
+        </div>
+      )}
+
       {/* Stats row */}
       <div className="grid grid-cols-3 gap-3">
         {[
@@ -92,12 +151,13 @@ export function FansListTable({ fans }: FansListTableProps) {
                 <th className="text-left px-4 py-3 text-muted-foreground font-medium">Email</th>
                 <th className="text-left px-4 py-3 text-muted-foreground font-medium">Estado</th>
                 <th className="text-left px-4 py-3 text-muted-foreground font-medium hidden sm:table-cell">Registro</th>
+                <th className="text-right px-4 py-3 text-muted-foreground font-medium">Acción</th>
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={3} className="px-4 py-8 text-center text-muted-foreground">
+                  <td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">
                     {search ? 'Sin resultados para esa búsqueda.' : 'Aún no tienes fans registrados.'}
                   </td>
                 </tr>
@@ -117,6 +177,21 @@ export function FansListTable({ fans }: FansListTableProps) {
                       </td>
                       <td className="px-4 py-3 text-muted-foreground hidden sm:table-cell">
                         {format(new Date(fan.created_at), 'd MMM yyyy', { locale: es })}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        {status === 'pendiente' ? (
+                          <button
+                            onClick={() => handleConfirmSingle(fan.id)}
+                            disabled={isPending}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 bg-green-500/20 hover:bg-green-500/30 text-green-300 border border-green-500/30 rounded-lg text-xs font-medium transition-colors"
+                            title="Confirmar y activar fan manualmente"
+                          >
+                            <UserCheck className="w-3.5 h-3.5" />
+                            Confirmar
+                          </button>
+                        ) : (
+                          <span className="text-xs text-muted-foreground/60">—</span>
+                        )}
                       </td>
                     </tr>
                   )

@@ -196,6 +196,30 @@ export interface Database {
           }
         ]
       }
+      follows: {
+        Row: {
+          id: string
+          creator_id: string
+          follower_id: string | null
+          client_identifier: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          creator_id: string
+          follower_id?: string | null
+          client_identifier?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          creator_id?: string
+          follower_id?: string | null
+          client_identifier?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -231,3 +255,5 @@ export type BroadcastLogInsert = Database['public']['Tables']['broadcast_logs'][
 export type GalleryItem = Database['public']['Tables']['gallery_items']['Row']
 export type GalleryItemInsert = Database['public']['Tables']['gallery_items']['Insert']
 export type GalleryItemUpdate = Database['public']['Tables']['gallery_items']['Update']
+
+export type Follow = Database['public']['Tables']['follows']['Row']

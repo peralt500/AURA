@@ -1,8 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { Turnstile } from '@marsidev/react-turnstile'
-import { Mail, Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
+import { Mail, Loader2, CheckCircle2, AlertCircle, Sparkles } from 'lucide-react'
 import { captureFan } from '@/lib/actions/fans'
 
 interface FanCaptureFormProps {
@@ -21,8 +20,6 @@ export function FanCaptureForm({ creatorId }: FanCaptureFormProps) {
 
     const formData = new FormData(e.currentTarget)
     formData.append('creatorId', creatorId)
-    
-    // Turnstile inyecta el token automáticamente en cf-turnstile-response
 
     const result = await captureFan(formData)
     
@@ -53,13 +50,6 @@ export function FanCaptureForm({ creatorId }: FanCaptureFormProps) {
             placeholder="tu@correo.com"
             className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 text-white placeholder:text-white/40 transition-all"
             disabled={status === 'loading' || status === 'success'}
-          />
-        </div>
-
-        <div className="w-full flex justify-center py-2">
-          <Turnstile 
-            siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!} 
-            options={{ theme: 'dark' }}
           />
         </div>
 
